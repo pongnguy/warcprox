@@ -19,7 +19,7 @@
 # USA.
 #
 
-FROM phusion/baseimage
+FROM phusion/baseimage:master-amd64
 MAINTAINER Noah Levitt <nlevitt@archive.org>
 
 # see https://github.com/stuartpb/rethinkdb-dockerfiles/blob/master/trusty/2.1.3/Dockerfile
@@ -30,9 +30,15 @@ ENV LANG=C.UTF-8
 RUN apt-get update && apt-get --auto-remove -y dist-upgrade
 
 # Add the RethinkDB repository and public key
-RUN curl -s https://download.rethinkdb.com/apt/pubkey.gpg | apt-key add - \
-    && echo "deb http://download.rethinkdb.com/apt xenial main" > /etc/apt/sources.list.d/rethinkdb.list \
-    && apt-get update && apt-get -y install rethinkdb
+RUN /bin/bash -c 'source /etc/lsb-release \
+    && echo "deb https://download.rethinkdb.com/repository/ubuntu-$DISTRIB_CODENAME $DISTRIB_CODENAME main" | tee /etc/apt/sources.list.d/rethinkdb.list \
+    && wget -qO- https://download.rethinkdb.com/repository/raw/pubkey.gpg | apt-key add - \
+    && apt-get update \
+    && apt-get install rethinkdb'
+
+#RUN curl -s https://download.rethinkdb.com/apt/pubkey.gpg | apt-key add - \
+#    && echo "deb http://download.rethinkdb.com/apt xenial main" > /etc/apt/sources.list.d/rethinkdb.list \
+#    && apt-get update && apt-get -y install rethinkdb
 
 RUN mkdir -vp /etc/service/rethinkdb \
     && echo "#!/bin/bash\nexec rethinkdb --bind 0.0.0.0 --directory /tmp/rethink-data --runuser rethinkdb --rungroup rethinkdb\n" > /etc/service/rethinkdb/run \
